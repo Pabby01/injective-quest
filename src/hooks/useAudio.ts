@@ -102,114 +102,177 @@ class AudioGenerator {
     }
 }
 
-// Background music using Web Audio API - Cosmic Ambient
+// Background music using Web Audio API - Upbeat Electronic Dance
 class BackgroundMusic {
     private audioContext: AudioContext | null = null;
     private oscillators: OscillatorNode[] = [];
     private gainNodes: GainNode[] = [];
     private masterGain: GainNode | null = null;
     private isPlaying = false;
-    private lfos: OscillatorNode[] = [];
+    private intervalId: number | null = null;
+    private bpm = 100;
+    private beatDuration = 0;
 
     constructor() {
         if (typeof window !== 'undefined') {
             this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
             this.masterGain = this.audioContext.createGain();
             this.masterGain.connect(this.audioContext.destination);
-            this.masterGain.gain.value = 0.08; // Gentle background volume
+            this.masterGain.gain.value = 0.15; // Moderate volume for dance music
+            this.beatDuration = 60 / this.bpm;
+        }
+    }
+
+    // Kick drum (bass hit)
+    private playKick(time: number) {
+        if (!this.audioContext) return;
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, time);
+        osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
+
+        gain.gain.setValueAtTime(0.8, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+
+        osc.start(time);
+        osc.stop(time + 0.3);
+    }
+
+    // Hi-hat
+    private playHiHat(time: number) {
+        if (!this.audioContext) return;
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(8000, time);
+
+        gain.gain.setValueAtTime(0.1, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+
+        osc.start(time);
+        osc.stop(time + 0.05);
+    }
+
+    // Bass line
+    private playBass(time: number, freq: number) {
+        if (!this.audioContext) return;
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.2, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+
+        osc.start(time);
+        osc.stop(time + 0.4);
+    }
+
+    // Lead synth melody
+    private playLead(time: number, freq: number, duration: number) {
+        if (!this.audioContext) return;
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.15, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+
+        osc.start(time);
+        osc.stop(time + duration);
+    }
+
+    // Pattern scheduler
+    private schedulePattern() {
+        if (!this.audioContext || !this.isPlaying) return;
+
+        const now = this.audioContext.currentTime;
+        const barDuration = this.beatDuration * 4; // 4 beats per bar
+
+        // Bass line pattern (E, E, G, A)
+        const bassNotes = [82.41, 82.41, 98.00, 110.00];
+
+        // Lead melody pattern
+        const melodyNotes = [
+            { freq: 329.63, duration: 0.3 }, // E
+            { freq: 392.00, duration: 0.3 }, // G
+            { freq: 440.00, duration: 0.3 }, // A
+            { freq: 493.88, duration: 0.3 }, // B
+        ];
+
+        // Schedule next 2 bars
+        for (let bar = 0; bar < 2; bar++) {
+            const barStart = now + bar * barDuration;
+
+            // Kick on beats 1 and 3
+            this.playKick(barStart);
+            this.playKick(barStart + this.beatDuration * 2);
+
+            // Hi-hats on every half beat
+            for (let i = 0; i < 8; i++) {
+                this.playHiHat(barStart + i * this.beatDuration / 2);
+            }
+
+            // Bass line
+            bassNotes.forEach((freq, i) => {
+                this.playBass(barStart + i * this.beatDuration, freq);
+            });
+
+            // Lead melody (every other bar)
+            if (bar % 2 === 0) {
+                melodyNotes.forEach((note, i) => {
+                    this.playLead(barStart + i * this.beatDuration, note.freq, note.duration);
+                });
+            }
         }
     }
 
     start() {
-        if (this.isPlaying || !this.audioContext || !this.masterGain) return;
+        if (this.isPlaying || !this.audioContext) return;
 
         this.isPlaying = true;
-        const now = this.audioContext.currentTime;
 
-        // Bass drone (deep space rumble)
-        const bass = this.audioContext.createOscillator();
-        const bassGain = this.audioContext.createGain();
-        bass.type = 'sine';
-        bass.frequency.value = 55; // A1
-        bassGain.gain.value = 0.4;
-        bass.connect(bassGain);
-        bassGain.connect(this.masterGain);
-        bass.start(now);
-        this.oscillators.push(bass);
-        this.gainNodes.push(bassGain);
-
-        // Atmospheric pad layer 1
-        const pad1 = this.audioContext.createOscillator();
-        const pad1Gain = this.audioContext.createGain();
-        pad1.type = 'sine';
-        pad1.frequency.value = 110; // A2
-        pad1Gain.gain.value = 0.15;
-        pad1.connect(pad1Gain);
-        pad1Gain.connect(this.masterGain);
-        pad1.start(now);
-        this.oscillators.push(pad1);
-        this.gainNodes.push(pad1Gain);
-
-        // Atmospheric pad layer 2 (fifth harmonic)
-        const pad2 = this.audioContext.createOscillator();
-        const pad2Gain = this.audioContext.createGain();
-        pad2.type = 'sine';
-        pad2.frequency.value = 165; // E3
-        pad2Gain.gain.value = 0.12;
-        pad2.connect(pad2Gain);
-        pad2Gain.connect(this.masterGain);
-        pad2.start(now);
-        this.oscillators.push(pad2);
-        this.gainNodes.push(pad2Gain);
-
-        // High shimmer (cosmic sparkle)
-        const shimmer = this.audioContext.createOscillator();
-        const shimmerGain = this.audioContext.createGain();
-        shimmer.type = 'sine';
-        shimmer.frequency.value = 880; // A5
-        shimmerGain.gain.value = 0.05;
-        shimmer.connect(shimmerGain);
-        shimmerGain.connect(this.masterGain);
-        shimmer.start(now);
-        this.oscillators.push(shimmer);
-        this.gainNodes.push(shimmerGain);
-
-        // Add LFO (Low Frequency Oscillator) for pulsing effect
-        const lfo = this.audioContext.createOscillator();
-        const lfoGain = this.audioContext.createGain();
-        lfo.type = 'sine';
-        lfo.frequency.value = 0.2; // Very slow pulse
-        lfoGain.gain.value = 0.03;
-        lfo.connect(lfoGain);
-        lfoGain.connect(bassGain.gain);
-        lfo.start(now);
-        this.lfos.push(lfo);
-
-        // High frequency shimmer LFO for ethereal effect
-        const shimmerLfo = this.audioContext.createOscillator();
-        const shimmerLfoGain = this.audioContext.createGain();
-        shimmerLfo.type = 'sine';
-        shimmerLfo.frequency.value = 0.5;
-        shimmerLfoGain.gain.value = 0.02;
-        shimmerLfo.connect(shimmerLfoGain);
-        shimmerLfoGain.connect(shimmerGain.gain);
-        shimmerLfo.start(now);
-        this.lfos.push(shimmerLfo);
+        // Schedule patterns every bar
+        this.schedulePattern();
+        this.intervalId = window.setInterval(() => {
+            if (this.isPlaying) {
+                this.schedulePattern();
+            }
+        }, (this.beatDuration * 4 * 1000) - 100); // Schedule slightly before bar ends
     }
 
     stop() {
+        this.isPlaying = false;
+        if (this.intervalId !== null) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
         this.oscillators.forEach(osc => {
             try {
                 osc.stop();
                 osc.disconnect();
-            } catch (e) {
-                // Already stopped
-            }
-        });
-        this.lfos.forEach(lfo => {
-            try {
-                lfo.stop();
-                lfo.disconnect();
             } catch (e) {
                 // Already stopped
             }
@@ -223,13 +286,11 @@ class BackgroundMusic {
         });
         this.oscillators = [];
         this.gainNodes = [];
-        this.lfos = [];
-        this.isPlaying = false;
     }
 
     setVolume(volume: number) {
         if (this.masterGain) {
-            this.masterGain.gain.value = volume * 0.08;
+            this.masterGain.gain.value = volume * 0.15;
         }
     }
 
@@ -268,8 +329,7 @@ export function useAudio() {
         // Stop or start background music based on mute state
         if (bgMusic.current) {
             if (isMuted) {
-                bgMusic.current.stop();
-                setMusicStarted(false);
+                // Music is now handled by toggleMuteEnhanced
             } else if (musicStarted) {
                 // Restart if it was playing before
                 bgMusic.current.stop();
@@ -302,10 +362,6 @@ export function useAudio() {
         }
     }, [isMuted]);
 
-    const toggleMute = useCallback(() => {
-        setIsMuted(prev => !prev);
-    }, []);
-
     const startBackgroundMusic = useCallback(() => {
         if (!isMuted && bgMusic.current && !bgMusic.current.getIsPlaying()) {
             bgMusic.current.start();
@@ -320,9 +376,21 @@ export function useAudio() {
         }
     }, []);
 
+    // Enhanced toggle that actually stops music
+    const toggleMuteEnhanced = useCallback(() => {
+        const newMutedState = !isMuted;
+        setIsMuted(newMutedState);
+
+        // Immediately stop music if muting
+        if (newMutedState && bgMusic.current) {
+            bgMusic.current.stop();
+            setMusicStarted(false);
+        }
+    }, [isMuted]);
+
     return {
         isMuted,
-        toggleMute,
+        toggleMute: toggleMuteEnhanced,
         playCorrect,
         playIncorrect,
         playChapterComplete,
