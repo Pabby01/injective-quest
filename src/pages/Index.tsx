@@ -81,18 +81,18 @@ export default function Index() {
           transition={{ duration: 0.8 }}
           className="text-center max-w-4xl mx-auto relative z-10"
         >
-          {/* Logo / Icon */}
+          {/* Logo */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="mb-8"
           >
-            <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary p-0.5 shadow-[0_0_60px_hsl(180_100%_50%_/_0.4)]">
-              <div className="w-full h-full rounded-2xl bg-background flex items-center justify-center">
-                <Swords className="w-12 h-12 text-primary" />
-              </div>
-            </div>
+            <img
+              src="/logo.svg"
+              alt="Injective Ninja Quest Logo"
+              className="w-48 h-48 mx-auto drop-shadow-[0_0_30px_rgba(0,242,254,0.5)]"
+            />
           </motion.div>
 
           {/* Title */}
@@ -100,11 +100,9 @@ export default function Index() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="font-orbitron text-4xl md:text-6xl lg:text-7xl font-bold mb-4"
+            className="font-orbitron text-5xl md:text-7xl font-bold gradient-text mb-6"
           >
-            <span className="gradient-text">Injective</span>
-            <br />
-            <span className="text-foreground">Ninja Quest</span>
+            Injective Ninja Quest
           </motion.h1>
 
           {/* Subtitle */}
