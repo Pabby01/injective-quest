@@ -3,6 +3,7 @@ import { Wallet, Trophy, User, LogOut } from "lucide-react";
 import { shortenAddress, getPlayerState, resetGame } from "@/lib/gameState";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useWallet } from "@/hooks/useWallet";
 
 interface ScoreHUDProps {
   onWalletConnect?: () => void;
@@ -10,6 +11,7 @@ interface ScoreHUDProps {
 
 export function ScoreHUD({ onWalletConnect }: ScoreHUDProps) {
   const [player, setPlayer] = useState(getPlayerState());
+  const { address, isConnected } = useWallet();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -25,6 +27,8 @@ export function ScoreHUD({ onWalletConnect }: ScoreHUDProps) {
       window.location.href = "/";
     }
   };
+
+  const displayAddress = isConnected && address ? address : player.walletAddress;
 
   return (
     <motion.div
@@ -45,12 +49,16 @@ export function ScoreHUD({ onWalletConnect }: ScoreHUDProps) {
 
       {/* Player Info */}
       <div className="glass-card px-4 py-2 flex items-center gap-3">
-        <User className="w-5 h-5 text-secondary" />
+        {isConnected ? (
+          <Wallet className="w-5 h-5 text-success" />
+        ) : (
+          <User className="w-5 h-5 text-secondary" />
+        )}
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground uppercase tracking-wider">Ninja</span>
           <span className="font-space text-sm text-foreground leading-tight">
-            {player.walletAddress 
-              ? shortenAddress(player.walletAddress) 
+            {displayAddress
+              ? shortenAddress(displayAddress)
               : player.ninjaName
             }
           </span>

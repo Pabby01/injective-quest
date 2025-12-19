@@ -6,19 +6,46 @@ import { ScoreHUD } from "@/components/ScoreHUD";
 import { ChapterCard } from "@/components/ChapterCard";
 import { Leaderboard } from "@/components/Leaderboard";
 import { LiveDataDisplay } from "@/components/LiveDataDisplay";
+import { WalletConnectButton } from "@/components/WalletConnectButton";
+import { AudioControl } from "@/components/AudioControl";
+import { useAudio } from "@/hooks/useAudio";
 import { chapters } from "@/data/chapters";
 import { getPlayerState, startQuest } from "@/lib/gameState";
 import { useState, useEffect } from "react";
 import { Swords, Zap, ChevronDown, ExternalLink } from "lucide-react";
 import ninjaHero from "@/assets/ninja-hero.png";
 
-const Index = () => {
-  const [player, setPlayer] = useState(getPlayerState());
+export default function Index() {
   const navigate = useNavigate();
+  const [player, setPlayer] = useState(getPlayerState());
+  const { startBackgroundMusic, musicStarted } = useAudio();
 
   useEffect(() => {
-    setPlayer(getPlayerState());
+    const interval = setInterval(() => {
+      setPlayer(getPlayerState());
+    }, 500);
+    return () => clearInterval(interval);
   }, []);
+
+  // Start background music on first user interaction
+  useEffect(() => {
+    if (!musicStarted) {
+      const startMusic = () => {
+        startBackgroundMusic();
+        // Remove listeners after first interaction
+        document.removeEventListener('click', startMusic);
+        document.removeEventListener('keydown', startMusic);
+      };
+
+      document.addEventListener('click', startMusic);
+      document.addEventListener('keydown', startMusic);
+
+      return () => {
+        document.removeEventListener('click', startMusic);
+        document.removeEventListener('keydown', startMusic);
+      };
+    }
+  }, [startBackgroundMusic, musicStarted]);
 
   const handleStartQuest = () => {
     startQuest();
@@ -30,13 +57,14 @@ const Index = () => {
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       <AnimatedBackground />
-      
+
       {player.questStarted && <ScoreHUD />}
+      <AudioControl />
 
       {/* Hero Section */}
       <section className="min-h-screen flex flex-col items-center justify-center px-4 relative">
         {/* Background Hero Image */}
-        <div 
+        <div
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `url(${ninjaHero})`,
@@ -88,14 +116,14 @@ const Index = () => {
           >
             Master the Injective Blockchain
           </motion.p>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="text-base md:text-lg text-muted-foreground/70 mb-12 max-w-2xl mx-auto"
           >
-            An immersive story-driven quest to learn about Injective's lightning-fast Layer 1 blockchain 
+            An immersive story-driven quest to learn about Injective's lightning-fast Layer 1 blockchain
             and join the Ninja Labs community.
           </motion.p>
 
@@ -117,16 +145,20 @@ const Index = () => {
                   <Zap className="w-5 h-5 group-hover:animate-pulse" />
                   Begin Your Quest
                 </Button>
+                <WalletConnectButton />
               </>
             ) : (
-              <Button
-                variant="hero"
-                size="xl"
-                onClick={() => document.getElementById("chapters")?.scrollIntoView({ behavior: "smooth" })}
-              >
-                Continue Quest
-                <ChevronDown className="w-5 h-5" />
-              </Button>
+              <>
+                <Button
+                  variant="hero"
+                  size="xl"
+                  onClick={() => document.getElementById("chapters")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  Continue Quest
+                  <ChevronDown className="w-5 h-5" />
+                </Button>
+                <WalletConnectButton />
+              </>
             )}
           </motion.div>
 
@@ -237,6 +269,4 @@ const Index = () => {
       </footer>
     </div>
   );
-};
-
-export default Index;
+}

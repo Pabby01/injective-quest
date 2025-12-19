@@ -4,6 +4,7 @@ import { Question } from "@/data/chapters";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CheckCircle, XCircle, ChevronRight } from "lucide-react";
+import { useAudio } from "@/hooks/useAudio";
 
 interface QuizPanelProps {
   questions: Question[];
@@ -16,6 +17,7 @@ export function QuizPanel({ questions, onComplete }: QuizPanelProps) {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+  const { playCorrect, playIncorrect, playChapterComplete } = useAudio();
 
   const currentQuestion = questions[currentIndex];
   const isLastQuestion = currentIndex === questions.length - 1;
@@ -28,12 +30,15 @@ export function QuizPanel({ questions, onComplete }: QuizPanelProps) {
 
   const handleConfirm = () => {
     if (selectedAnswer === null) return;
-    
+
     setShowResult(true);
-    
+
     if (isCorrect) {
       setScore(prev => prev + 10);
       setCorrectAnswers(prev => prev + 1);
+      playCorrect();
+    } else {
+      playIncorrect();
     }
   };
 
@@ -42,6 +47,7 @@ export function QuizPanel({ questions, onComplete }: QuizPanelProps) {
       // Calculate bonus for perfect chapter
       const perfectChapter = correctAnswers + (isCorrect ? 1 : 0) === questions.length;
       const finalScore = score + (isCorrect ? 10 : 0) + (perfectChapter ? 10 : 0);
+      playChapterComplete();
       onComplete(finalScore, perfectChapter);
     } else {
       setCurrentIndex(prev => prev + 1);
@@ -68,7 +74,7 @@ export function QuizPanel({ questions, onComplete }: QuizPanelProps) {
 
       {/* Progress Bar */}
       <div className="progress-bar mb-8">
-        <motion.div 
+        <motion.div
           className="progress-bar-fill"
           initial={{ width: 0 }}
           animate={{ width: `${((currentIndex + (showResult ? 1 : 0)) / questions.length) * 100}%` }}
@@ -94,7 +100,7 @@ export function QuizPanel({ questions, onComplete }: QuizPanelProps) {
             {currentQuestion.options.map((option, index) => {
               const isSelected = selectedAnswer === index;
               const isCorrectAnswer = index === currentQuestion.correctAnswer;
-              
+
               let stateClass = "";
               if (showResult) {
                 if (isCorrectAnswer) {
@@ -153,8 +159,8 @@ export function QuizPanel({ questions, onComplete }: QuizPanelProps) {
               >
                 <div className={cn(
                   "p-4 rounded-xl border",
-                  isCorrect 
-                    ? "bg-success/10 border-success/30" 
+                  isCorrect
+                    ? "bg-success/10 border-success/30"
                     : "bg-destructive/10 border-destructive/30"
                 )}>
                   <p className="text-sm font-semibold mb-2">

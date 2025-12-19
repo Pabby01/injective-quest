@@ -7,6 +7,8 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { ScoreHUD } from "@/components/ScoreHUD";
 import { LiveDataDisplay } from "@/components/LiveDataDisplay";
 import { QuizPanel } from "@/components/QuizPanel";
+import { ShareMenu } from "@/components/ShareMenu";
+import { AudioControl } from "@/components/AudioControl";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Scroll, Trophy, Sparkles } from "lucide-react";
 
@@ -38,6 +40,7 @@ export default function ChapterPage() {
   if (!chapter) return null;
 
   const Icon = chapter.icon;
+  const isAllChaptersComplete = player.completedChapters.length === 5;
 
   const handleStartQuiz = () => {
     setPhase("quiz");
@@ -58,6 +61,7 @@ export default function ChapterPage() {
     <div className="min-h-screen relative">
       <AnimatedBackground />
       <ScoreHUD />
+      <AudioControl />
 
       {/* Back Button */}
       <motion.div
@@ -185,7 +189,7 @@ export default function ChapterPage() {
                 </motion.div>
 
                 <h2 className="font-orbitron text-3xl font-bold text-foreground mb-2">
-                  Chapter Complete!
+                  {isAllChaptersComplete ? "Quest Complete! 🎉" : "Chapter Complete!"}
                 </h2>
                 <p className="text-muted-foreground mb-6">
                   You've mastered {chapter.title}
@@ -198,7 +202,7 @@ export default function ChapterPage() {
                   <div className="text-sm text-muted-foreground uppercase tracking-wider">
                     Points Earned
                   </div>
-                  
+
                   {isPerfect && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -211,6 +215,32 @@ export default function ChapterPage() {
                     </motion.div>
                   )}
                 </div>
+
+                {isAllChaptersComplete && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mb-6"
+                  >
+                    <div className="glass-strong p-4 rounded-xl max-w-md mx-auto mb-4">
+                      <p className="text-lg font-orbitron text-primary mb-1">
+                        🥷 Congratulations, Master Ninja!
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        You've completed all 5 chapters and mastered the Injective blockchain!
+                      </p>
+                    </div>
+                    <ShareMenu
+                      shareData={{
+                        score: player.score,
+                        totalScore: 150,
+                        chaptersCompleted: player.completedChapters.length,
+                        ninjaName: player.ninjaName,
+                      }}
+                    />
+                  </motion.div>
+                )}
 
                 <Button
                   variant="hero"
